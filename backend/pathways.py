@@ -4,9 +4,8 @@ from datetime import timedelta
 
 app = Flask(__name__)
 app.secret_key = "pathways"
-app.permanent_session_lifetime = timedelta(minutes=30) # we store our permanent session data for 10 minutes
+app.permanent_session_lifetime = timedelta(minutes=30) # we store our permanent session data for 30 minutes
 
-# Shows the home page for the website with inline HTML
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -15,7 +14,7 @@ def home():
 def login():
     if request.method == "POST":
         session.permanent = True
-        user = request.form["nm"] # this gives us the data inputted by login.html form, because this is a dict
+        user = request.form["nm"] # this gives us the data inputted by login.html form
         session["user"] = user
         return redirect(url_for("user"))
     else:    
@@ -45,6 +44,5 @@ def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
 
-# What makes the application actually run
 if __name__ == "__main__":
     app.run(debug=True)
