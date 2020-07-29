@@ -1,4 +1,0 @@
-{
-    "python.pythonPath": "pathways\\Scripts\\python.exe"
-    "python.autoComplete.extraPaths": ["./**"],
-}

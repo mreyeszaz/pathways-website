@@ -3,7 +3,7 @@ from datetime import timedelta
 from flask import Blueprint, Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 
-from forms import LoginForm, PostForm, SignUpForm, email_validator
+from .forms import LoginForm, PostForm, SignUpForm
 
 # Creates the app object that runs our application
 app = Flask(__name__)
