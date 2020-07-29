@@ -1,11 +1,14 @@
-from flask import Flask, redirect, url_for, render_template, request, session, jsonify, Blueprint
 from datetime import timedelta
+
+from flask import Blueprint, Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+
+from forms import LoginForm, PostForm, SignUpForm, email_validator
 
 # Creates the app object that runs our application
 app = Flask(__name__)
-
-# Not too sure what this does
+app.secret_key = "pathways"
+# Stops annoying updates from happening 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # This tells Flask that we want to use a sqlite3 database
@@ -15,8 +18,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
 db = SQLAlchemy(app)
 
 # This creates a 'Pathway' obj that we can save in our database
-
-
 class Pathway(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(50))
@@ -24,24 +25,28 @@ class Pathway(db.Model):
     description = db.Column(db.String(50))
     image = db.Column(db.String(100))
 
+'''
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(50))
+    company = db.Column(db.String(50))
+    description = db.Column(db.String(50))
+    image = db.Column(db.String(100))
+'''
 
-app.secret_key = "pathways"
 # we store our permanent session data for 30 minutes
 app.permanent_session_lifetime = timedelta(minutes=30)
-
 
 @app.route("/")
 def default():
     return redirect(url_for("home"))
 
 
-@app.route("/api")
+@app.route("/api/")
 def home():
     return render_template("home.html")
 
 # This method triggers whenever someone creates a new 'Pathway' object
-
-
 @app.route("/api/add_pathway", methods=['POST'])
 def add_pathway():
     pathway_data = request.get_json()
@@ -55,8 +60,6 @@ def add_pathway():
     return 'Added', 201
 
 # This generates all of the 'Pathway' objects in our database
-
-
 @app.route('/api/pathways')
 def pathways():
     pathways_list = Pathway.query.all()
@@ -70,19 +73,27 @@ def pathways():
     return jsonify({'pathways': pathways})
 
 
+@app.route('/api/delete_pathway')
+def delete_pathway():
+    found_pathway = Pathway.query.filter_by(title=title).delete()
+    for pathway in found_pathway:
+        pathway.delete()
+        db.session.commit()
+
 @app.route("/api/login", methods=["POST", "GET"])
 def login():
+    # we are submitting the user information when it is POST
     if request.method == "POST":
         session.permanent = True
         # this gives us the data inputted by login.html form
         user = request.form["nm"]
         session["user"] = user
         return redirect(url_for("user"))
+    # we are just loading the page when it is GET
     else:
         if "user" in session:
             return redirect(url_for("user"))
         return render_template("login.html")
-
 
 @app.route("/api/signup")
 def signup():
@@ -99,11 +110,11 @@ def user():
         return redirect(url_for("login"))
 
 
-@app.route("/logout")
+@app.route("/api/logout")
 def logout():
     session.pop("user", None)
     return redirect(url_for("login"))
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
