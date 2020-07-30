@@ -1,9 +1,6 @@
 from datetime import timedelta
-
 from flask import Blueprint, Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
-
-from .forms import LoginForm, PostForm, SignUpForm
 
 # Creates the app object that runs our application
 app = Flask(__name__)
@@ -22,24 +19,37 @@ class Pathway(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(50))
     company = db.Column(db.String(50))
-    description = db.Column(db.String(50))
+    description = db.Column(db.String(500))
     image = db.Column(db.String(100))
 
-'''
+    def __init__(self, title, company, description, image):
+        self.title = title
+        self.company = company
+        self.description = description
+        self.image = image
+
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(50))
-    company = db.Column(db.String(50))
-    description = db.Column(db.String(50))
-    image = db.Column(db.String(100))
-'''
+    firstName = db.Column(db.String(50))
+    lastName = db.Column(db.String(50))
+    email = db.Column(db.String(50), unique=True)
+    password = db.Column(db.String(50))
+
+    def __init__(self, firstName, lastName, descriptemailion, password):
+        self.title = title
+        self.firstName = firstName
+        self.lastName = lastName
+        self.email = email
+        self.password = password
+
 
 # we store our permanent session data for 30 minutes
 app.permanent_session_lifetime = timedelta(minutes=30)
 
 @app.route("/")
 def default():
-    return redirect(url_for("home"))
+    return redirect(url_for("pathways"))
 
 
 @app.route("/api/")
@@ -72,15 +82,29 @@ def pathways():
                          'image': pathway.image})
     return jsonify({'pathways': pathways})
 
+# This generates all of the 'Pathway' objects in our database
+@app.route('/api/pathways/<int:id>', methods=['GET'])
+def pathway(id=id):
+    pathways_list = Pathway.query.filter_by(id=id)
+    pathways = []
 
-@app.route('/api/delete_pathway')
-def delete_pathway():
-    found_pathway = Pathway.query.filter_by(title=title).delete()
-    for pathway in found_pathway:
-        pathway.delete()
-        db.session.commit()
+    for pathway in pathways_list:
+        pathways.append({'title': pathway.title,
+                         'company': pathway.company,
+                         'description': pathway.description,
+                         'image': pathway.image})
+    return jsonify({'pathways': pathways})
 
-@app.route("/api/login", methods=["POST", "GET"])
+
+@app.route('/api/delete_pathway/<id>', methods=['GET','POST'])
+def delete_pathway(id=id):
+    found_pathway = Pathway.query.filter_by(id=2)
+    found_pathway.delete()
+    db.session.commit()
+    return 'Deleted', 201
+
+
+@app.route("/api/login", methods=["GET", "POST"])
 def login():
     # we are submitting the user information when it is POST
     if request.method == "POST":
@@ -95,9 +119,22 @@ def login():
             return redirect(url_for("user"))
         return render_template("login.html")
 
-@app.route("/api/signup")
+@app.route("/api/signup", methods = ['GET','POST'])
 def signup():
-    return render_template("signup.html")
+    if request.method == "POST":
+
+        user_info = request.get_json()
+
+        new_user = User(firstName=user_info['firstName'],
+                            lastName=user_info['lastName'],
+                            email=user_info['email'],
+                            password=user_info['password'])
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect(url_for("pathways"))
+    else:
+        return jsonify({'page' : 'Sign Up'})
+
 
 
 @app.route("/api/user")
